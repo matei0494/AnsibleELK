@@ -1,0 +1,2 @@
+gpgkey: 'https://artifacts.elastic.co/GPG-KEY-elasticsearch'
+elasticbaseurl: 'https://artifacts.elastic.co/packages/6.x/yum'

@@ -1,0 +1,42 @@
+---
+
+- name: install filebeat
+  yum:
+    name: filebeat
+  tags: filebeat 
+
+- name: create the filebeat conf
+  file:
+    path: /etc/logstash/conf.d/{{ beats_conf }}.conf
+    state: touch
+  tags: filebeat
+
+- name: replace multiple occurences in the filebeat.yml file
+  replace:
+      path: "{{ item.path }}"
+      regexp: "{{ item.regexp1 }}"
+      replace: "{{ item.replace }}"
+  with_items:
+      - { path: '/etc/filebeat/filebeat.yml', regexp1: '#output.elasticsearch:', replace: 'output.elasticsearch:'}
+      - { path: '/etc/filebeat/filebeat.yml', regexp1: '#output.logstash:', replace: 'output.logstash:'}
+ #     - { path: '/etc/filebeat/filebeat.yml', regexp1: '#hosts', replace: 'hosts: ["localhost:9200"]'}
+     # - { path: '/etc/filebeat/filebeat.yml', regexp1: '(#hosts: ["localhost:5044"])', replace: 'hosts: ["localhost:5044"]'}
+  tags: filebeat
+
+- name: just add the filebeat 5044 line as it doesen't fucking work with regexp
+  lineinfile:
+    dest: /etc/filebeat/filebeat.yml
+    line: 'hosts: ["localhost:5044"]'
+    insertafter: 'output.logstash:'
+  tags: filebeat
+
+- name: enable filebeat modules
+  shell: "sudo filebeat modules enable system"
+  tags: filebeat 
+
+- name: start and enable filebeat
+  systemd:
+     name: filebeat
+     state: started
+     enabled: yes
+  tags: filebeat

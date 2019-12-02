@@ -1,0 +1,38 @@
+---
+
+- name: register rpm
+  become: true
+  shell: "rpm --import {{ gpgkey }}"
+  args:
+    warn: no
+  tags: elasticsearch
+- name: create file elasticsearch repo
+  file: 
+    path: /etc/yum.repos.d/elasticsearch.repo
+    state: touch 
+  tags: elasticsearch
+
+- name: write to elasticsearch repo from jinja template 
+  template:
+    src: roles/elasticsearch/templates/repo.j2
+    dest: /etc/yum.repos.d/elasticsearch.repo
+  tags: elasticsearch
+
+- name: install elasticsearch
+  yum:
+    name: elasticsearch
+  tags: elasticsearch
+
+- name: replace network host line in the config
+  lineinfile:
+    dest: /etc/elasticsearch/elasticsearch.yml
+    regexp: '#network.host'
+    line: 'network.host: localhost' 
+  tags: elasticsearch
+
+- name: enable and start elasticsearch
+  service:
+    name: elasticsearch
+    state: started
+    enabled: yes
+  tags: elasticsearch

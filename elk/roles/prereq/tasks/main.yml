@@ -1,0 +1,34 @@
+---
+
+- name: install java
+  yum:
+    name: "{{ javapkg }}"
+  tags: prereq
+
+- name: install epel release
+  yum:
+    name: epel-release
+  tags: prereq
+
+- name: install nginx
+  yum:
+    name: nginx
+  tags: prereq
+ 
+- name: enable and start nginx
+  service:
+    name: nginx
+    state: started
+    enabled: yes      
+  tags: prereq
+
+- name: install chrome
+  get_url:
+    url: https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
+    dest: "/root"
+  tags: prereq
+
+- name: install chrome 2
+  yum:
+    name: "/root/google-chrome-stable_current_x86_64.rpm"
+  tags: prereq

@@ -1,0 +1,67 @@
+---
+- name: install kibana
+  yum:
+    name: kibana
+  tags: kibana
+
+- name: enable kibana
+  service:
+    name: kibana
+    enabled: yes
+  tags: kibana
+
+#- name: start kibana
+#  service:
+#    name: kibana
+#    state: started
+#  tags: kibana
+
+- name: start kibana
+  shell: "service kibana start"
+  tags: start
+
+- name: delete the htpasswd.users file first
+  file: 
+     path: /etc/nginx/htpasswd.users
+     state: absent
+  tags: kibana
+
+- name: write kibana password
+  shell: "echo \"{{opensslname}}:`openssl passwd -apr1  pass:{{opensslpass}}`\" | tee -a /etc/nginx/htpasswd.users"
+  tags: kibana
+ 
+- name: create the nginx conf
+  file:
+    path: /etc/nginx/conf.d/{{ ansible_hostname }}
+    state: touch
+  tags: kibana
+
+- name: write to nginx conf using template
+  template:
+    src: roles/kibana/templates/nginx.j2
+    dest: /etc/nginx/conf.d/{{ ansible_hostname }}
+  tags: kibana
+
+- name: check nginx for configuration errors
+  shell: "nginx -t"
+  register: nginx_check
+ # ignore_errors: true
+  tags: kibana
+
+
+- name: if there are no errors, continue by restarting nginx
+  service:
+    name: nginx
+    state: restarted
+  when: nginx_check|successful
+  tags: kibana
+
+
+- name: setbool
+  shell: "sudo setsebool httpd_can_network_connect 1 -P"
+
+- name: check url using a python script
+  script: roles/kibana/files/url_check.py
+  register: output
+  tags: kibana
+
